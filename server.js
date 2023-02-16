@@ -1,11 +1,11 @@
-const { MongoClient, ServerApiVersion } = require('mongodb');
 const express = require('express');
 const multer = require('multer');
 const csv = require('csv-parser');
 const mongoose = require('mongoose');
+const cors = require('cors');
 const fs = require('fs');
 mongoose.set('strictQuery', false);
-const uri = "mongodb+srv://mysecondproject:mysecondproject@mysecondproject.6irgxzg.mongodb.net/?retryWrites=true&w=majority";
+const uri = "mongodb+srv://mysecondproject:mysecondproject@mysecondproject.6irgxzg.mongodb.net/Udmey?retryWrites=true&w=majority";
 
 mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
@@ -18,15 +18,17 @@ connection.once('open', () => {
 connection.on('error', (err) => {
   console.error("MongoDB connection error: ", err);
 });
-
-
 const app = express();
+app.use(cors({ origin: 'http://localhost:3000' }));
 const upload = multer({ dest: 'uploads/' });
 
 
 const csvDataSchema = new mongoose.Schema({
-  field1: String,
-  field2: String,
+  //_id:mongoose.Schema.Types.ObjectId(),
+  name: String,
+  company: String,
+  email: String,
+  
 });
 
 const CsvData = mongoose.model('CsvData', csvDataSchema);
@@ -34,6 +36,51 @@ const CsvData = mongoose.model('CsvData', csvDataSchema);
 app.use(express.json());
 app.get('/', (req, res) => {
   res.send('Hello World!');
+});
+
+// Create 
+app.post('/csvData', (req, res) => {
+  const csvData = new CsvData(req.body);
+  csvData.save((err, result) => {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      res.send(result);
+    }
+  });
+});
+
+// Read 
+app.get('/csvData', (req, res) => {
+  CsvData.find((err, csvData) => {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      res.send(csvData);
+    }
+  });
+});
+
+// Update 
+app.put('/csvData/:Id', (req, res) => {
+  CsvData.findByIdAndUpdate(req.params.sagar, req.body, { new: true }, (err, csvData) => {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      res.send(csvData);
+    }
+  });
+});
+
+//Delete 
+app.delete('/csvData/:Id', (req, res) => {
+  CsvData.findByIdAndRemove(req.params.sagar, (err, csvData) => {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      res.send(csvData);
+    }
+  });
 });
 
 app.post('/upload', upload.single('file'), (req, res) => {
